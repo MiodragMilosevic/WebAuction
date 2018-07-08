@@ -1,0 +1,45 @@
+﻿@using WebAuction.Models
+@model SearchAuction
+
+<div class="row text-center">
+
+    @using (Html.BeginForm("Index", "Auctions", FormMethod.Get))
+    {
+        <div class="col-lg-2 col-md-2 hidden-sm"></div>
+        <div class="col-lg-2 col-md-2 col-sm-12 form-group">
+            @Html.LabelFor(m => m.ProductName, "Product name")
+            @Html.TextBoxFor(m => m.ProductName, new { @class = "form-control" })
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 form-group">
+            @Html.LabelFor(m => m.MinPrice, "Min Price")
+            @Html.TextBoxFor(m => m.MinPrice, new { @class = "form-control" })
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 form-group">
+            @Html.LabelFor(m => m.MaxPrice, "Max Price") 
+            @Html.TextBoxFor(m => m.MaxPrice, new { @class = "form-control" })
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 form-group">
+            @Html.LabelFor(m => m.State, "State")
+            @Html.DropDownListFor(m => m.State,
+                                     new List<SelectListItem>
+                                     {
+                new SelectListItem { Text ="Ready", Value="READY" },
+                new SelectListItem { Text ="Opened", Value="OPENED" },
+                new SelectListItem { Text ="Completed", Value="COMPLETED" }
+                                     },
+                                     "All", new { @class = "form-control" })
+        </div>
+
+        <div class="col-lg-1 col-md-1 col-sm-12 form-group">
+            <br />
+            <input type="submit" value="Search" class="btn btn-default" style="margin-top: 5px;" />
+        </div>
+        <div class="col-lg-1 col-md-1 hidden-sm"></div>
+    }
+
+</div>
+<br />
+<hr />

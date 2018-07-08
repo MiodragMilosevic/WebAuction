@@ -1,0 +1,47 @@
+﻿@model WebAuction.Models.SystemParameter
+@{
+    ViewBag.Title = "ParametersDetails";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+<h2>Parameters Details</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>User</h4>
+        <hr />
+        <table class="table table-bordered table-striped dl-horizontal">
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.RecentAuction)</td>
+                <td>@Html.DisplayFor(model => model.RecentAuction)</td>
+            </tr>
+
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.DefaultAuctionTime)</td>
+                <td>@Html.DisplayFor(model => model.DefaultAuctionTime)</td>
+            </tr>
+
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.SilverPackage)</td>
+                <td>@Html.DisplayFor(model => model.SilverPackage)</td>
+            </tr>
+
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.GoldPackage)</td>
+                <td>@Html.DisplayFor(model => model.GoldPackage)</td>
+            </tr>
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.PlatinumPackage)</td>
+                <td>@Html.DisplayFor(model => model.PlatinumPackage)</td>
+            </tr>
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.Currency)</td>
+                <td>@Html.DisplayFor(model => model.Currency)</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<p>
+    @Html.ActionLink("Edit", "EditParameters", new { id = Model.Id }) |
+    @Html.ActionLink("Back to List", "Index", "Auctions")
+</p>

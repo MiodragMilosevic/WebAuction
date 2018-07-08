@@ -1,0 +1,68 @@
+﻿@model IEnumerable<WebAuction.Models.TokenOder>
+
+@{
+    ViewBag.Title = "All Tokens Order";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+<br />
+<h3>All token orders.</h3>
+<h5>This is the history of all the orders you had.</h5>
+
+<div class="row">
+    <div class="col-md-1"></div>
+    <div class="col-md-10">
+        <table class="table">
+            <tr>
+                <th>
+                    @Html.Label("Id ")
+                </th>
+                <th>
+                    @Html.Label("Buyer:")
+                </th>
+                <th>
+                    @Html.Label("Tokens Amount:")
+                </th>
+                <th>
+                    @Html.Label("Price:")
+                </th>
+                <th>
+                    @Html.Label("Currency:")
+                </th>
+                <th>
+                    @Html.Label("Status:")
+                </th>
+                <th></th>
+            </tr>
+            @if (Model != null)
+            {
+                int i = 1;
+                foreach (var order in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(m => order.Id)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(m => order.Buyer)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(m => order.TokensAmount)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(m => order.Price)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(m => order.Currency)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(m => order.Status)
+                        </td>
+                    </tr>
+                    i++;
+                }
+            }
+        </table>
+    </div>
+    <div class="col-md-1"></div>
+</div>

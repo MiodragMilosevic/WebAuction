@@ -1,0 +1,124 @@
+﻿@using WebAuction.Models
+@model IEnumerable<WebAuction.Models.Auction>
+
+@{
+    const decimal USDEUR = 1.20m;
+    const decimal RSDUSD = 100m;
+    const decimal RSDEUR = 120m;
+}
+
+<div class="row">
+
+    <div class="col-md-1"></div>
+    @{
+        var i = 0;
+        foreach (var item in Model)
+        {
+            if (i == 5)
+            {
+                <div class="col-md-1"></div>
+                <div class="row"></div>
+                <div class="col-md-1"></div>
+                i = 0;
+            }
+            i++;
+            <div class="col-md-2" style="text-align:center; margin-left:10px; margin-top:15px;">
+                <div class="thumbnail">
+                    <div class="text-center">
+                        @Html.ActionLink(item.Name, "Details", new { id = item.Id })
+                    </div>
+                    <div class="text-center" style="margin-bottom: 15px">
+                        <img src="@Html.DisplayFor(modelItem => item.Img)" width="150" height="150" alt="Picture"
+                             style="height: 150px;" />
+                    </div>
+                    @{
+                        string stringTime;
+                        if (item.State.Equals("OPENED"))
+                        {
+                            var duration = TimeSpan.FromSeconds(item.AuctionTime);
+                            TimeSpan time = duration - (DateTime.Now - (DateTime)item.OpenedOn);
+                            if (time.Seconds <= 0) 
+                            {
+                                stringTime = "00:00:00";
+                            }
+                            else 
+                            {
+                                stringTime = time.ToString(@"hh\:mm\:ss");
+                            }
+                        }
+                        else if (item.State.Equals("READY"))
+                        {
+                            var seconds = item.AuctionTime;
+                            TimeSpan time = TimeSpan.FromSeconds(seconds);
+                            stringTime = time.ToString(@"hh\:mm\:ss");
+                        }
+                        else { stringTime = "00:00:00"; }
+                    }
+
+                    <div class="thumbnail">
+                        <div class="text-center">
+                            <label id="@item.Id-time">@stringTime</label> <br />
+                            <div class="row">
+                                <div id="@item.Id-price" style="margin:auto;">
+                                    @{
+                                        var value = item.CurrentPrice / ViewBag.last.TokensPrice;
+                                        switch (ViewBag.last.Currency)
+                                        {
+                                            case "USD":
+                                                {
+                                                    if (item.Currency == "RSD") { value /= RSDUSD; }
+                                                    else if (item.Currency == "EUR") { value *= USDEUR; }
+                                                    break;
+                                                }
+                                            case "RSD":
+                                                {
+                                                    if (item.Currency == "USD") { value *= RSDUSD; }
+                                                    else if (item.Currency == "EUR") { value *= RSDEUR; }
+                                                    break;
+                                                }
+                                            case "EUR":
+                                                {
+                                                    if (item.Currency == "RSD") { value /= RSDUSD; }
+                                                    else if (item.Currency == "USD") { value /= USDEUR; }
+                                                    break;
+                                                }
+                                        }
+                                    }
+                                    @value tokens
+                                </div><br />
+
+                            </div>
+
+                            <label id="@item.Id-winner">
+                                @if (item.FullName != null)
+                                {@item.FullName}
+                        </label>
+
+                        <div class="row">
+                            <p id="@item.Id-auctionStatus">Status: @Html.DisplayFor(modelItem => item.State)</p><br />
+                        </div>
+                        <div class="text-center">
+                            @if (Session["User"] != null && Session["Admin"] == null)
+                            {
+                                if (item.State == "OPENED")
+                                {
+                                    <input id="@item.Id-bid" type="button"
+                                           class="btn btn-info form-control" name="dugme" 
+                                            value="BID" onclick="sendBid('@(((User)Session["User"]).Email)' ,@item.Id)"/>
+                                }
+                            }
+                            @if (Session["Admin"] != null && item.State == "READY")
+                            {
+                                   @Html.ActionLink("Open", "OpenAuction", new { id = item.Id })
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    }
+    <div class="col-md-1"></div>
+    <div class="col-md-1"></div>
+</div>
+

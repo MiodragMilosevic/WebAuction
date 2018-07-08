@@ -1,0 +1,17 @@
+﻿@using WebAuction.Models
+@model SearchAuctionContainer
+
+@{
+    ViewBag.Title = "Auction - Index";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+
+<h1 align="center">Auctions you won!</h1>
+
+<br />
+@Html.Partial("SearchForm", Model.searchAuction)
+
+<hr />
+
+@Html.Partial("DisplayAuction", Model.auctionList)

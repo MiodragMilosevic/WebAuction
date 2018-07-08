@@ -1,0 +1,225 @@
+﻿@model WebAuction.Models.Auction
+
+@{
+    ViewBag.Title = "Details";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+@{
+    const decimal USDEUR = 1.20m;
+    const decimal RSDUSD = 100m;
+    const decimal RSDEUR = 120m;
+}
+
+@section addition
+{
+    <script type="text/javascript">
+
+        $(function () {
+            var hub = $.connection.ChatHub;
+
+            hub.client.addNewMessageToPage = function (name, message, Id, FirstName, LastName, Auction, date, Amount, Currency) {
+                var price = parseFloat($('#' + message + '-price').text()) + 1;
+                $('#' + message + '-price').text(price + "tokens").css('color', 'green').css('font-weight', 'bold');
+                $('#' + message + '-winner').text(name);
+                var table = document.getElementById(message + '-bids');
+                var row = table.insertRow(1);
+
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                var cell5 = row.insertCell(4);
+                var cell6 = row.insertCell(5);
+
+                cell1.innerHTML = Id;
+                cell2.innerHTML = FirstName + " " + LastName;
+                cell3.innerHTML = Auction;
+                cell4.innerHTML = @DateTime.Now;
+                cell5.innerHTML = Amount;
+                cell6.innerHTML = Currency;
+
+            };
+
+            $.connection.hub.start().done(function () {
+
+            });
+
+        });
+
+        function sendBid(name, id) {
+            var hub = $.connection.ChatHub;
+            hub.server.Send(name, id);
+        }
+
+        setInterval(function () {
+            $("label[id$='-time']").each(function (index) {
+
+                var id = $(this).attr("id");
+
+                id = id.substring(0, id.length);
+
+                var time = $(this).text();
+
+                var seconds = time.slice(6, 8);
+                var minutes = time.slice(3, 5);
+                var hours = time.slice(0, 2);
+
+
+                bidId = id.split("-");
+
+                if (hours == "00" && minutes == "00" && seconds == "00") {
+                    $(this).text(hours + ":" + minutes + ":" + seconds).css("color", "red");
+                    $('#' + bidId[0] + '-bid').addClass("disabled");
+
+                    var val = $('#' + bidId[0] + '-price').text();
+
+                    $('#' + bidId[0] + '-auctionStatus').text('Status: COMPLETED').css("color", "red");
+                    $('#' + bidId[0] + '-completedOn').text(DateTime.Now).css("color", "red");
+                    return;
+                }
+                if (hours == "00" && minutes == "00" && seconds == "10") {
+                    $(this).css("color", "red");
+                }
+
+                if ($('#' + bidId[0] + '-auctionStatus').text() == 'Status: OPENED') {
+
+                    var d = new Date(((parseInt(hours, 10) - 1) * 3600 + parseInt(minutes, 10) * 60 + parseInt(seconds, 10) - 1) * 1000);
+
+                    hours = d.getHours();
+                    minutes = d.getMinutes();
+                    seconds = d.getSeconds();
+
+                    if (hours < 10)
+                        hours = "0" + hours;
+
+                    if (minutes < 10)
+                        minutes = "0" + minutes;
+
+                    if (seconds < 10)
+                        seconds = "0" + seconds;
+
+                    $(this).text(hours + ":" + minutes + ":" + seconds);
+                }
+                else $('#' + bidId[0] + '-bid').addClass("disabled");
+            })
+        }, 1000);
+
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-6">
+            <div class="thumbnail">
+                <div class="text-center">
+                    @Html.ActionLink(Model.Name, "Details", new { id = Model.Id })
+                </div>
+                <div class="text-center" style="margin-bottom: 15px">
+                    <img src="@Html.DisplayFor(modelItem => Model.Img)" width="150" height="150" alt="Picture"
+                         style="height: 150px;" />
+                </div>
+                @{
+                string stringTime;
+                if (Model.State.Equals("OPENED"))
+                {
+                    var duration = TimeSpan.FromSeconds(Model.AuctionTime);
+                    TimeSpan time = duration - (DateTime.Now - (DateTime)Model.OpenedOn);
+                    if (time.Seconds <= 0)
+                    {
+                        stringTime = "00:00:00";
+                    }
+                    else
+                    {
+                        stringTime = time.ToString(@"hh\:mm\:ss");
+                    }
+                }
+                else if (Model.State.Equals("READY"))
+                {
+                    var seconds = Model.AuctionTime;
+                    TimeSpan time = TimeSpan.FromSeconds(seconds);
+                    stringTime = time.ToString(@"hh\:mm\:ss");
+                }
+                else { stringTime = "00:00:00"; }
+                }
+
+                <div class="thumbnail">
+                    <div class="text-center">
+                        <label id="@Model.Id-time">@stringTime</label> <br />
+                        <div class="row">
+                            <div id="@Model.Id-price" style="margin:auto;">
+                                @{
+                                var value = Model.CurrentPrice / ViewBag.last.TokensPrice;
+                                switch (ViewBag.last.Currency)
+                                {
+                                    case "USD":
+                                        {
+                                            if (Model.Currency == "RSD") { value /= RSDUSD; }
+                                            else if (Model.Currency == "EUR") { value *= USDEUR; }
+                                            break;
+                                        }
+                                    case "RSD":
+                                        {
+                                            if (Model.Currency == "USD") { value *= RSDUSD; }
+                                            else if (Model.Currency == "EUR") { value *= RSDEUR; }
+                                            break;
+                                        }
+                                    case "EUR":
+                                        {
+                                            if (Model.Currency == "RSD") { value /= RSDUSD; }
+                                            else if (Model.Currency == "USD") { value /= USDEUR; }
+                                            break;
+                                        }
+                                }
+                                }
+                                @value tokens
+                            </div><br />
+
+                        </div>
+
+                        <label id="@Model.Id-winner">
+                            @if (Model.FullName != null)
+                        {@Model.FullName}
+                        </label>
+
+                        <div class="row">
+                            <p id="@Model.Id-auctionStatus">Status: @Html.DisplayFor(modelItem => Model.State)</p><br />
+                        </div>
+
+                        <div class="row">
+                            <p id="@Model.AuctionTime-auctionTime">AuctionTime:@Html.DisplayFor(modelItem => Model.AuctionTime)</p>
+                            <p id="@Model.CreatedOn-createdOn">CreatedOn:@Html.DisplayFor(modelItem => Model.CreatedOn)</p>
+                            <p id="@Model.OpenedOn-openedOn">OpenedOn:@Html.DisplayFor(modelItem => Model.OpenedOn)</p>
+                            <p id="@Model.CompletedOn-auctionTime">CompletedOn:@Html.DisplayFor(modelItem => Model.CompletedOn)</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+    </div>
+    <div class="col-md-6">
+        <table id="@Model.Id-bids" class="table table-striped table-bordered" style="text-align:center">
+            <tr>
+                <th style="text-align:center">Id</th>
+                <th style="text-align:center">Bidder</th>
+                <th style="text-align:center">Auction</th>
+                <th style="text-align:center">BidOn</th>
+                <th style="text-align:center">Amount</th>
+                <th styke="text-align:center">Currency</th>
+            </tr>
+            @{
+                foreach (var bid in ViewBag.Bids)
+                {
+                    <tr>
+                        <td>@bid.Id</td>
+                        <td>@bid.User.FirstName @bid.User.LastName</td>
+                        <td>@bid.Auction</td>
+                        <td>@bid.BidOn</td>
+                        <td>@bid.Amount</td>
+                        <td>@bid.Currency</td>
+                    </tr>
+                }
+            }
+        </table>
+    </div>
+</div>
+

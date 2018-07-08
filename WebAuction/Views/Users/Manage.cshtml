@@ -1,0 +1,40 @@
+﻿@model WebAuction.Models.User
+
+@{
+    ViewBag.Title = "Manage";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+<h2>About user</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>User</h4>
+        <hr />
+        <table class="table table-bordered table-striped dl-horizontal">
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.FirstName)</td>
+                <td>@Html.DisplayFor(model => model.FirstName)</td>
+            </tr>
+
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.LastName)</td>
+                <td>@Html.DisplayFor(model => model.LastName)</td>
+            </tr>
+
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.Email)</td>
+                <td>@Html.DisplayFor(model => model.Email)</td>
+            </tr>
+
+            <tr>
+                <td>@Html.DisplayNameFor(model => model.Address)</td>
+                <td>@Html.DisplayFor(model => model.Address)</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.Id }) |
+    @Html.ActionLink("Back to List", "Index", "Auctions")
+</p>

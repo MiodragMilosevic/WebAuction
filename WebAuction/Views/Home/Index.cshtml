@@ -1,0 +1,26 @@
+﻿@{ ViewBag.Title = "Home Page"; }
+
+@section addition
+{
+    <script type="text/javascript">
+
+        $(function () {
+            var hub = $.connection.HiHub;
+
+            hub.client.hello = function () {
+                alert("Hi");
+            };
+
+            $.connection.hub.start().done(function () {
+                $("#hello").click(function () {
+                    alert("Saying hi...");
+                    hub.server.Hello();
+                });
+            });
+
+        });
+    </script>
+}
+
+
+<button type="button" id="hello">Say hi!</button>

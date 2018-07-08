@@ -1,0 +1,50 @@
+﻿@model WebAuction.Models.BuyTokens
+
+@{
+    ViewBag.Title = "Buy Tokens";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+<h2>Buy Tokens</h2>
+
+
+@using (Html.BeginForm("BuysTokens", "Users", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+        <div class="col-lg-4 col-md-4 col-sm-12 form-group">
+            @Html.LabelFor(m => m.PackageType, "State")
+            @Html.DropDownListFor(m => m.PackageType,
+                                                    new List<SelectListItem>
+                                                    {
+                                    new SelectListItem { Text ="SILVER", Value="SILVER" },
+                                    new SelectListItem { Text ="GOLD", Value="GOLD" },
+                                    new SelectListItem { Text ="PLATINUM", Value="PLATINUM" }
+                                                    }, new { @class = "form-control" })
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12 form-group">
+            @Html.LabelFor(model => model.PhoneNumber, "PhoneNumber(06x xxxx xxx):")
+            @Html.EditorFor(model => model.PhoneNumber,
+                      new { htmlAttributes = new { @class = "form-control" } })
+        </div>
+        <div class="form-group">
+            <div class="col-lg-3 col-md-3 col-sm-12">
+                <br />
+                <input type="submit" value="BuyTokens" class="btn btn-default" style="margin-top:5px;" />
+            </div>
+        </div>
+    </div>
+}
+
+
+<div>
+    @Html.ActionLink("Back to List", "Index", "Auctions")
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

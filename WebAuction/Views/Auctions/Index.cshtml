@@ -1,0 +1,102 @@
+﻿@using WebAuction.Models
+@model SearchAuctionContainer
+
+@{
+    ViewBag.Title = "Auction - Index";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+@section addition
+{
+    <script type="text/javascript">
+
+        $(function () {
+            var hub = $.connection.ChatHub;
+
+            hub.client.addNewMessageToPage = function (name, message, Id, FirstName, LastName, Auction, BidOn, Amount, Currency) {
+                var price = parseFloat($('#' + message + '-price').text()) + 1;
+                $('#' + message + '-price').text(price + "tokens").css('color', 'green').css('font-weight', 'bold');
+                $('#' + message + '-winner').text(name);
+            };
+            
+            $.connection.hub.start().done(function () {
+                
+            });
+            
+        });
+
+        function sendBid(name, id) {
+            var hub = $.connection.ChatHub;
+            hub.server.Send(name, id);
+        }
+
+        setInterval(function () {
+            $("label[id$='-time']").each(function (index) {
+
+                var id = $(this).attr("id");
+                
+                id = id.substring(0, id.length);
+
+                var time = $(this).text();
+
+                var seconds = time.slice(6, 8);
+                var minutes = time.slice(3, 5);
+                var hours = time.slice(0, 2);
+
+
+                bidId = id.split("-");
+
+                if (hours == "00" && minutes == "00" && seconds == "00") {
+                    $(this).text(hours + ":" + minutes + ":" + seconds).css("color", "red");
+                    $('#' + bidId[0] + '-bid').addClass("disabled");
+                    
+                    var val = $('#' + bidId[0] + '-price').text();
+                    
+                    $('#' + bidId[0] + '-auctionStatus').text('Status: COMPLETED').css("color", "red");
+                    return;
+                }
+                if (hours == "00" && minutes == "00" && seconds == "10") {
+                    $(this).css("color", "red");
+                }
+
+                if ($('#' + bidId[0] + '-auctionStatus').text() == 'Status: OPENED') {
+
+                    var d = new Date(((parseInt(hours, 10) - 1) * 3600 + parseInt(minutes, 10) * 60 + parseInt(seconds, 10) - 1) * 1000);
+
+                    hours = d.getHours();
+                    minutes = d.getMinutes();
+                    seconds = d.getSeconds();
+
+                    if (hours < 10)
+                        hours = "0" + hours;
+
+                    if (minutes < 10)
+                        minutes = "0" + minutes;
+
+                    if (seconds < 10)
+                        seconds = "0" + seconds;
+
+                    $(this).text(hours + ":" + minutes + ":" + seconds);
+                }
+                else $('#' + bidId[0] + '-bid').addClass("disabled");
+            })
+        }, 1000);
+
+    </script>
+
+}
+
+
+<h1 align="center">Welcome</h1>
+
+@if (((User)Session["User"]) != null)
+{
+    <h3 align="center">@(((User)Session["User"]).FirstName) @(((User)Session["User"]).LastName)</h3>
+}
+
+<br />
+@Html.Partial("SearchForm", Model.searchAuction)
+
+<hr />
+
+@Html.Partial("DisplayAuction", Model.auctionList)
