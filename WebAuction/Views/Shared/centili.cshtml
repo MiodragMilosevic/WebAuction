@@ -6,11 +6,7 @@
     <title>@ViewBag.Title - AS Auctions</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
-    @Scripts.Render("~/bundles/jquery")
-    <script src="~/Scripts/jquery.signalR-2.3.0.min.js"></script>
-    <script src="~/signalr/hubs"></script>
-    <link href="~/Content/Style.css" rel="stylesheet" type="text/css" />
-    <script type="text/javascript" src="https://stage.centili.com/widget/js/c-mobile-payment-scripts.js"></script> 
+    <script type="text/javascript" src="http://stage.centili.com/widget/js/c-mobile-payment-scripts.js"></script>
     @RenderSection("addition", required: false)
 </head>
 <body>
@@ -33,7 +29,6 @@
                         <li>@Html.ActionLink("Auction you won", "AuctionsWon", "Auctions")</li>
                         <li>@Html.ActionLink("Manage Account", "Manage", "Users")</li>
                         <li>@Html.ActionLink("Buy Tokens", "BuyTokens", "Users")</li>
-                        <li>@Html.ActionLink("Change Password", "ChangePass", "Users")</li>
                     }
                     @if (Session["Admin"] != null)
                     {

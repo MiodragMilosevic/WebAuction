@@ -13,10 +13,12 @@
         $(function () {
             var hub = $.connection.ChatHub;
 
-            hub.client.addNewMessageToPage = function (name, message, Id, FirstName, LastName, Auction, BidOn, Amount, Currency) {
-                var price = parseFloat($('#' + message + '-price').text()) + 1;
+            hub.client.addNewMessageToPage = function (name, message, Id, FirstName, LastName, Auction, BidOn, Amount, Currency, value) {
+                var price = value;
                 $('#' + message + '-price').text(price + "tokens").css('color', 'green').css('font-weight', 'bold');
                 $('#' + message + '-winner').text(name);
+                var newVal = price + 1;
+                $('#' + Auction + '-vrednost').val(newVal);
             };
             
             $.connection.hub.start().done(function () {
@@ -26,8 +28,9 @@
         });
 
         function sendBid(name, id) {
+            var val = $('#' + id + '-vrednost').val();
             var hub = $.connection.ChatHub;
-            hub.server.Send(name, id);
+            hub.server.Send(name, id, val);
         }
 
         setInterval(function () {
@@ -43,7 +46,7 @@
                 var minutes = time.slice(3, 5);
                 var hours = time.slice(0, 2);
 
-
+               
                 bidId = id.split("-");
 
                 if (hours == "00" && minutes == "00" && seconds == "00") {

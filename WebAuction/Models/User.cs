@@ -40,7 +40,7 @@ namespace WebAuction.Models
         [StringLength(255)]
         public string Password { get; set; }
 
-        public decimal TokensNumber { get; set; }
+        public double? TokensNumber { get; set; }
 		
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Bid> Bids { get; set; }

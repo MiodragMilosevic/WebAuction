@@ -102,6 +102,10 @@
                             {
                                 if (item.State == "OPENED")
                                 {
+                                    var val = value + 1;
+
+                                    <input class ="form-control" id="@item.Id-vrednost" type="text" value="@val"/>
+                                    <br/>
                                     <input id="@item.Id-bid" type="button"
                                            class="btn btn-info form-control" name="dugme" 
                                             value="BID" onclick="sendBid('@(((User)Session["User"]).Email)' ,@item.Id)"/>

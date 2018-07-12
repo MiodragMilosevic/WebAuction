@@ -28,7 +28,6 @@
         @Html.LabelFor(model => model.AuctionTime, htmlAttributes: new { @class = "control-label col-md-2" })
         <div class="col-md-10">
             @Html.EditorFor(model => model.AuctionTime, new { htmlAttributes = new { @class = "form-control" } })
-            @Html.ValidationMessageFor(model => model.AuctionTime, "", new { @class = "text-danger" })
         </div>
     </div>
 
@@ -37,19 +36,6 @@
         <div class="col-md-10">
             @Html.EditorFor(model => model.StartPrice, new { htmlAttributes = new { @class = "form-control" } })
             @Html.ValidationMessageFor(model => model.StartPrice, "", new { @class = "text-danger" })
-        </div>
-    </div>
-
-    <div class="form-group">
-        @Html.LabelFor(model => model.Currency, htmlAttributes: new { @class = "control-label col-md-2" })
-        <div class="col-md-10">
-            @Html.DropDownListFor(model => model.Currency, new List<SelectListItem>
-            {
-                new SelectListItem { Text ="RSD", Value="RSD" },
-                new SelectListItem { Text ="EUR", Value="EUR" },
-                new SelectListItem { Text ="USD", Value="USD" },
-            }, null, new { @class = "form-control input-md" })
-            @Html.ValidationMessageFor(model => model.State, "", new { @class = "text-danger" })
         </div>
     </div>
 

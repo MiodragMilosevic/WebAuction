@@ -18,8 +18,8 @@
         $(function () {
             var hub = $.connection.ChatHub;
 
-            hub.client.addNewMessageToPage = function (name, message, Id, FirstName, LastName, Auction, date, Amount, Currency) {
-                var price = parseFloat($('#' + message + '-price').text()) + 1;
+            hub.client.addNewMessageToPage = function (name, message, Id, FirstName, LastName, Auction, date, Amount, Currency, value) {
+                var price = value;
                 $('#' + message + '-price').text(price + "tokens").css('color', 'green').css('font-weight', 'bold');
                 $('#' + message + '-winner').text(name);
                 var table = document.getElementById(message + '-bids');
@@ -35,7 +35,7 @@
                 cell1.innerHTML = Id;
                 cell2.innerHTML = FirstName + " " + LastName;
                 cell3.innerHTML = Auction;
-                cell4.innerHTML = @DateTime.Now;
+                cell4.innerHTML = "@DateTime.Now";
                 cell5.innerHTML = Amount;
                 cell6.innerHTML = Currency;
 

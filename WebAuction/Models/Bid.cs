@@ -16,7 +16,7 @@ namespace WebAuction.Models
 
         public DateTime BidOn { get; set; }
 
-        public decimal? Amount { get; set; }
+        public double? Amount { get; set; }
 
         [Required]
         [StringLength(3)]

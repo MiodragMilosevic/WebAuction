@@ -1,0 +1,65 @@
+﻿@model WebAuction.Models.User
+
+@{
+    ViewBag.Title = "Edit";
+    Layout = "~/Views/Shared/auctionHeader.cshtml";
+}
+
+<h2>Edit</h2>
+
+@if (ViewBag.Message != null)
+{
+    <font color="red">@ViewBag.Message</font>
+}
+
+@using (Html.BeginForm("Change", "Users", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>User</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.Id)
+        @Html.HiddenFor(model => model.TokensNumber)
+        @Html.HiddenFor(model => model.FirstName)
+        @Html.HiddenFor(model => model.LastName)
+        @Html.HiddenFor(model => model.Email)
+        @Html.HiddenFor(model => model.Address)
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Old password:</label>
+            <div class="col-md-10">
+                <input id="old" type="password" class="form-control" name="oldpass" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">New password:</label>
+            <div class="col-md-10">
+                <input id ="new" type="password" class="form-control" name="newpass" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Continue password:</label>
+            <div class="col-md-10">
+                <input id ="con" type="password" class="form-control" name="conpass" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Save" class="btn btn-default"/>
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index", "Auctions")
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

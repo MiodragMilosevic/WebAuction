@@ -12,6 +12,12 @@ using System.Data.Entity.Infrastructure;
 using Hangfire;
 using Hangfire.SqlServer;
 using System.Threading;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
+using System.Net.Mail;
+using System.Text;
+using System.Web.Hosting;
+using System.Threading.Tasks;
 
 namespace WebAuction.Controllers
 {
@@ -105,11 +111,27 @@ namespace WebAuction.Controllers
 
     public class AuctionsController : Controller
     {
+
+        const double USDEUR = 1.20;
+        const double RSDUSD = 100;
+        const double RSDEUR = 120;
+
+        private static object sync = new object();
+        readonly log4net.ILog logger = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        public static int Guid2Int(Guid value)
+        {
+            byte[] b = value.ToByteArray();
+            int bint = BitConverter.ToInt32(b, 0);
+            return bint;
+        }
+
         private ModelBaze db = new ModelBaze();
 
         // GET: Auctions
         public ActionResult Index(string productName, decimal? minPrice, decimal? maxPrice, string state)
         {
+            tryCompleted();
             SearchAuction searchAuction = new SearchAuction();
             searchAuction.ProductName = productName;
             searchAuction.MinPrice = minPrice;
@@ -123,7 +145,7 @@ namespace WebAuction.Controllers
 
             var auction = from a in db.Auctions
                           select a;
-
+            auction = auction.OrderByDescending(x => x.OpenedOn);
             if (!String.IsNullOrEmpty(productName))
             {
                 string[] words = productName.Split(null); 
@@ -162,6 +184,7 @@ namespace WebAuction.Controllers
         // GET: Auctions/Details/5
         public ActionResult Details(int? id)
         {
+            tryCompleted();
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
@@ -189,6 +212,7 @@ namespace WebAuction.Controllers
         {
             if (Session["User"] != null && Session["Admin"] == null)
             {
+                tryCompleted();
                 return View();
             }
             else
@@ -202,57 +226,116 @@ namespace WebAuction.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,Name,AuctionTime,CreatedOn,OpenedOn,CompletedOn,StartPrice,CurrentPrice,Currency,State,Img")] Auction auction)
+        public ActionResult Create([Bind(Include = "Id,Name,AuctionTime,CreatedOn,OpenedOn,CompletedOn,StartPrice,CurrentPrice,Currency,State,Img,Who")] Auction auction)
         {
             if (Session["User"] == null || Session["Admin"] != null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-              
-            if (ModelState.IsValid)
-            {
-                auction.CreatedOn = DateTime.Now;
-                auction.State = "READY";
-                auction.CurrentPrice = auction.StartPrice;
-                db.Auctions.Add(auction);
-                bool saveFailed;
-                do
-                {
-                    saveFailed = false;
-                    try { db.SaveChanges(); }
-                    catch (DbUpdateConcurrencyException ex)
-                    {
-                        saveFailed = true;
-                        // Update original values from the database 
-                        var entry = ex.Entries.Single();
-                        entry.OriginalValues.SetValues(entry.GetDatabaseValues());
-                    }
-                } while (saveFailed);
-                return RedirectToAction("Index");
-            }
+            tryCompleted();
+            var findAllParameters = from sp in db.SystemParameters
+                                    select sp;
 
-            return View(auction);
+            var last = findAllParameters.ToList().Last();
+
+            auction.CreatedOn = DateTime.Now;
+            auction.State = "READY";
+            auction.Currency = last.Currency;
+            auction.CurrentPrice = auction.StartPrice;
+            auction.Who = ((User)Session["User"]).Id;
+            if (auction.AuctionTime <= 0) auction.AuctionTime = last.DefaultAuctionTime;
+            db.Auctions.Add(auction);
+            bool saveFailed;
+            do
+            {
+                saveFailed = false;
+                try { db.SaveChanges(); }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    saveFailed = true;
+                    // Update original values from the database 
+                    var entry = ex.Entries.Single();
+                    entry.OriginalValues.SetValues(entry.GetDatabaseValues());
+                }
+            } while (saveFailed);
+            return RedirectToAction("Index");
         }
 
         public ActionResult BuyTokens()
         {
+            tryCompleted();
             return View();
         }
 
-        public ActionResult GetCentiliDetails(string id, int? amount, string status)
+        public ActionResult CentiliReply(int clientid, string status)
         {
-            var order = db.TokenOders.Where(i => i.Status.Equals("SUBMITTED")).OrderByDescending(m => m.Id).FirstOrDefault();
-            switch (status)
+            lock (sync)
             {
-                case "success":
-                    order.Status = "COMPLETED"; 
-                    break;
-                case "canceled":
-                    order.Status = "CANCELED";
-                    break;
+                var findAllParameters = from sp in db.SystemParameters
+                                        select sp;
+                tryCompleted();
+                var last = findAllParameters.ToList().Last();
+                var order = db.TokenOders.Where(i => i.Status.Equals("SUBMITTED")).OrderByDescending(m => m.Id).FirstOrDefault();
+                switch (status)
+                {
+                    case "success":
+                        order.Status = "COMPLETED";
+                        break;
+                    case "canceled":
+                        order.Status = "CANCELED";
+                        break;
+                    default:
+                        order.Status = "CANCELED";
+                        break;
+                }
+                var user = db.Users.Find(clientid);//Guid2Int(clientid)); 
+                if (status.Equals("success"))
+                {
+                    user.TokensNumber += order.TokensAmount;          
+                    bool saveFailed;
+                    do
+                    {
+                        saveFailed = false;
+                        try { db.SaveChanges(); }
+                        catch (DbUpdateConcurrencyException ex)
+                        {
+                            saveFailed = true;
+                            var entry = ex.Entries.Single();
+                            entry.OriginalValues.SetValues(entry.GetDatabaseValues());
+                        }
+                    } while (saveFailed);
+                    using (SmtpClient smtpClient = new SmtpClient("smtp.sendgrid.net", 587))
+                    {
+                        var basicCredential = new NetworkCredential("azure_f218ba7c42403230b08c85a599d307d3@azure.com", "Gospodin13!");
+                        using (MailMessage message = new MailMessage())
+                        {
+                            MailAddress fromAddress = new MailAddress("miodragmilosevic96@gmail.com");
+
+                            //smtpClient.Host = "mail.mydomain.com";
+                            smtpClient.UseDefaultCredentials = false;
+                            smtpClient.Credentials = basicCredential;
+
+                            message.From = fromAddress;
+                            message.Subject = "Kupovina tokena";
+                            // Set IsBodyHtml to true means you can send HTML email.
+                            message.IsBodyHtml = true;
+                            message.Body = "<h1>Uspesno ste kupili tokene</h1> <p>Kupili ste tacno " + order.TokensAmount + " tokena po ceni od " + order.Price + " " + last.Currency +"</p>";
+                            message.To.Add(user.Email);
+
+                            try
+                            {
+                                smtpClient.Send(message);
+                            }
+                            catch (Exception ex)
+                            {
+                                //Error, could not send the message
+                                Response.Write(ex.Message);
+                            }
+                        }
+                    }
+                }
             }
-            var user = db.Users.Find(Int32.Parse(id));
-            user.TokensNumber = order.TokensAmount;
+            
             return RedirectToAction("AllTokenOrders", "Users");
         }
 
@@ -262,6 +345,8 @@ namespace WebAuction.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+            tryCompleted();
+            logger.Info("Auction open " + id);
             var auction = db.Auctions.Find(id);
 
             if (auction.State != "READY")
@@ -282,27 +367,84 @@ namespace WebAuction.Controllers
                     entry.OriginalValues.SetValues(entry.GetDatabaseValues());
                 }
             } while (saveFailed);
-            Thread t = new Thread(() =>
-            {
-                Thread.Sleep(auction.AuctionTime * 1000);
-                auction.CompletedOn = DateTime.Now;
-                auction.State = "COMPLETED";
-                do
-                {
-                    saveFailed = false;
-                    try { db.SaveChanges(); }
-                    catch (DbUpdateConcurrencyException ex)
-                    {
-                        saveFailed = true;
-                        var entry = ex.Entries.Single();
-                        entry.OriginalValues.SetValues(entry.GetDatabaseValues());
-                    }
-                } while (saveFailed);
-            });
-            t.IsBackground = true;
-            t.Start();
-            //BackgroundJob.Schedule(() => closeAuction(auction), TimeSpan.FromSeconds(auction.AuctionTime));
+            //BackgroundJob.Schedule(() => closeAuction(auction.Id), new TimeSpan(0, 0, auction.AuctionTime));
+            
             return RedirectToAction("Index");
+        }
+
+        public void tryCompleted()
+        {
+            var auctions = from a in db.Auctions
+                           select a;
+            auctions = auctions.Where(x => x.State.Equals("OPENED"));
+
+            LinkedList<int> list = new LinkedList<int>();
+            foreach (var a in auctions)
+            {
+                DateTime opened = (DateTime)a.OpenedOn;
+                opened = opened.AddSeconds(a.AuctionTime);
+              //  opened = opened.AddHours(2);
+                if (opened <= DateTime.Now) list.AddLast(a.Id);
+            }
+
+            foreach(var el in list)
+            {
+                closeAuction(el);
+            }
+            bool saveFailed;
+            do
+            {
+                saveFailed = false;
+                try { db.SaveChanges(); }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    saveFailed = true;
+                    var entry = ex.Entries.Single();
+                    entry.OriginalValues.SetValues(entry.GetDatabaseValues());
+                }
+            } while (saveFailed);
+        }
+
+        public void closeAuction(int id)
+        {
+            var auction = db.Auctions.Find(id);
+            auction.CompletedOn = DateTime.Now;
+            auction.State = "COMPLETED";
+
+            var findAllParameters = from sp in db.SystemParameters
+                                    select sp;
+
+            var last = findAllParameters.ToList().Last();
+            var idB = auction.Who;
+            var prodavac = db.Users.Find(idB);
+            var query = from a in db.Bids
+                        where a.Bidder == auction.User
+                        select a;
+            var bids = query.Max(x => x.Amount);
+            auction.CurrentPrice = (decimal)bids;
+            var value = (double)auction.CurrentPrice / (double)last.TokensPrice;
+            switch (last.Currency)
+            {
+                case "USD":
+                    {
+                        if (auction.Currency == "RSD") { value /= RSDUSD; }
+                        else if (auction.Currency == "EUR") { value *= USDEUR; }
+                        break;
+                    }
+                case "RSD":
+                    {
+                        if (auction.Currency == "USD") { value *= RSDUSD; }
+                        else if (auction.Currency == "EUR") { value *= RSDEUR; }
+                        break;
+                    }
+                case "EUR":
+                    {
+                        if (auction.Currency == "RSD") { value /= RSDUSD; }
+                        else if (auction.Currency == "USD") { value /= USDEUR; }
+                        break;
+                    }
+            }
+            prodavac.TokensNumber += value;
         }
 
         public ActionResult AuctionsWon(string productName, decimal? minPrice, decimal? maxPrice, string state)
@@ -311,6 +453,7 @@ namespace WebAuction.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+            tryCompleted();
             SearchAuction searchAuction = new SearchAuction();
             searchAuction.ProductName = productName;
             searchAuction.MinPrice = minPrice;
